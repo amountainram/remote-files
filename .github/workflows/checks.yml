@@ -1,0 +1,40 @@
+name: build
+
+on:
+  workflow_call:
+    inputs:
+      rust-version:
+        default: '1.71'
+        required: false
+        type: string
+
+jobs:
+  compile-and-lint:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:${{ inputs.rust-version }}-bookworm
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Retrieve taget architecture
+        id: target-arch
+        run: |
+          echo "TARGET_ARCH=`rustc -vV | sed -n 's|host: ||p'`" >> "$GITHUB_OUTPUT"
+
+      - name: Build Cache
+        uses: actions/cache@v3
+        id: build-cache
+        with:
+          path: |
+            .cargo
+            target
+          key: ${{ runner.os }}-cargo-${{ steps.target-arch.outputs.TARGET_ARCH }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check compilation
+        run: cargo check
+
+      - name: Lint
+        run: |
+          rustup component add rustfmt
+          cargo fmt --check

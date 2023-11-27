@@ -1,0 +1,56 @@
+name: build
+
+on:
+  workflow_call:
+    inputs:
+      rust-version:
+        default: '1.71'
+        required: false
+        type: string
+      distro:
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:${{ inputs.rust-version }}-${{ inputs.distro }}
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Retrieve taget architecture
+        id: target-arch
+        run: |
+          echo "TARGET_ARCH=`rustc -vV | sed -n 's|host: ||p'`" >> "$GITHUB_OUTPUT"
+
+      - name: Add Alpine Deps
+        if: ${{ startsWith(inputs.distro, 'alpine') }}
+        run: |
+          # 👇 https://stackoverflow.com/questions/64184839/github-actions-cachev2-unrecognized-option-posix-in-the-post-job
+          apk add --update --no-cache tar
+          # 🦀 deps needed by alpine
+          apk add --update --no-cache musl-dev openssl openssl-dev
+
+      - name: Add Debian Bookworm Deps
+        if: ${{ inputs.distro == 'bookworm' }}
+        run: |
+          apt update
+          # 🦀 deps needed by debian bookworm
+          apt install openssl openssl-dev
+
+      - name: Build Cache
+        uses: actions/cache@v3
+        id: build-cache
+        with:
+          path: |
+            .cargo
+            target
+          key: ${{ runner.os }}-cargo-${{ steps.target-arch.outputs.TARGET_ARCH }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build library
+        run: cargo build
+
+      - name: Test binary
+        run: cargo run -- --version

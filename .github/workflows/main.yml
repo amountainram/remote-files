@@ -1,0 +1,29 @@
+name: push main
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "schemas/**"
+      - "src/**"
+      - "tests/**"
+
+jobs:
+  checks:
+    needs: []
+    uses: amountainram/remote-files/.github/workflows/checks.yml@main
+
+  build-application:
+    needs: []
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [alpine, bookworm, bullseye, buster]
+        rust: ['1.71','1.72','1.73','1.74']
+    uses: amountainram/remote-files/.github/workflows/build.yml@main
+    with:
+      distro: ${{ matrix.distro }}

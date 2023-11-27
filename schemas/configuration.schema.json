@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "schemas/configuration.schema.json",
+  "type": "object",
+  "examples": [
+    {},
+    {
+      "my-gcs-bucket": {
+        "type": "gcs",
+        "configuration": {
+          "name": "my-gcs-bucket",
+          "credentialPath": "~/.config/gcloud/application_default_credentials.json"
+        }
+      }
+    },
+    {
+      "my-gcs-bucket": {
+        "type": "gcs",
+        "configuration": {
+          "name": "my-gcs-bucket",
+          "credentialPath": "~/.config/gcloud/application_default_credentials.json"
+        }
+      },
+      "my-aws-bucket": {
+        "type": "s3",
+        "configuration": {
+          "name": "my-aws-bucket",
+          "endpoint": null,
+          "prefix": null,
+          "region": "eu-west-1",
+          "accessKeyId": "********************",
+          "secretAccessKey": "******************************",
+          "defaultStorageClass": null
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "gcs": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "credential": { "type": "string" },
+        "credentialPath": { "type": "string" },
+        "prefix": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "predefinedAcl": {
+          "type": "string",
+          "default": "publicRead",
+          "enum": [
+            "authenticatedRead",
+            "bucketOwnerFullControl",
+            "bucketOwnerRead",
+            "private",
+            "projectPrivate",
+            "publicRead"
+          ]
+        },
+        "defaultStorageClass": {
+          "type": "string",
+          "default": "STANDARD",
+          "enum": ["STANDARD", "NEARLINE", "COLDLINE", "ARCHIVE"]
+        }
+      }
+    },
+    "s3": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "prefix": { "type": "string" },
+        "region": { "type": "string" },
+        "accessKeyId": { "type": "string" },
+        "secretAccessKey": { "type": "string" },
+        "defaultStorageClass": {
+          "type": "string",
+          "default": "STANDARD",
+          "enum": [
+            "DEEP_ARCHIVE",
+            "GLACIER",
+            "GLACIER_IR",
+            "INTELLIGENT_TIERING",
+            "ONEZONE_IA",
+            "OUTPOSTS",
+            "REDUCED_REDUNDANCY",
+            "STANDARD",
+            "STANDARD_IA"
+          ]
+        }
+      }
+    }
+  },
+  "additionalProperties": {
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "configuration"],
+        "properties": {
+          "type": { "const": "gcs" },
+          "configuration": {
+            "$ref": "#/definitions/gcs"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "configuration"],
+        "properties": {
+          "type": { "type": "string", "enum": ["s3", "oci"] },
+          "configuration": {
+            "$ref": "#/definitions/s3"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "configuration"],
+        "properties": {
+          "type": { "const": "ftp" },
+          "configuration": {
+            "$ref": "#/definitions/ftp"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "configuration"],
+        "properties": {
+          "type": { "const": "http" },
+          "configuration": {
+            "$ref": "#/definitions/http"
+          }
+        }
+      }
+    ]
+  }
+}
