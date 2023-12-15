@@ -17,6 +17,15 @@ jobs:
     needs: []
     uses: amountainram/remote-files/.github/workflows/checks.yml@main
 
+  tests:
+    needs:
+      - checks
+    uses: amountainram/remote-files/.github/workflows/tests.yml@main
+    secrets:
+      configuration_base64: ${{ secrets.CONFIGURATION_TEST_BASE64 }}
+      application_default_credentials_base64: ${{ secrets.APPLICATION_DEFAULT_CREDENTIALS_BASE64 }}
+
+
   build-application:
     needs: []
     strategy:
