@@ -38,7 +38,7 @@ jobs:
         run: |
           apt update
           # 🦀 deps needed by debian bookworm
-          apt install openssl openssl-dev
+          apt install -y openssl
 
       - name: Build Cache
         uses: actions/cache@v3
