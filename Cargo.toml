@@ -21,7 +21,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.4.11", features = ["derive"] }
-colored = "2.0.4"
+colored = "2.1.0"
 dirs = "5.0.1"
 futures = "0.3.29"
 opendal = { version = "0.43.0", default-features = false, features = ["services-gcs", "services-s3", "native-tls"] }
