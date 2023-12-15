@@ -2,7 +2,7 @@ use cli::{Args, Commands, Format, Parser, ProfileCommands};
 use colored::{ColoredString, Colorize};
 use futures::StreamExt;
 use opendal::EntryMode;
-use rf::{
+use remote_files::{
     client::StatEntry,
     configuration::{
         self, create_client, Configuration, ConfigurationLayer, Persistence, PersistenceLayer,

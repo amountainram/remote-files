@@ -1,6 +1,6 @@
 use opendal::EntryMode;
 use prettytable::{format, row, Table};
-use rf::client::StatEntry;
+use remote_files::client::StatEntry;
 
 fn parse_content_length(input: &str, raw: bool) -> String {
     if raw || input.len() == 0 {

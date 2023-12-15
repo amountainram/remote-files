@@ -1,5 +1,5 @@
 use futures::future::join_all;
-use rf::{
+use remote_files::{
     client::Client,
     configuration::{Bucket, ConfigurationLayer},
 };

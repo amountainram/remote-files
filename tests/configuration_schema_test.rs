@@ -1,4 +1,4 @@
-use rf::configuration::Configuration;
+use remote_files::configuration::Configuration;
 use serde_json::{self, Value};
 use std::{env, error::Error, fmt::Display, fs, io::BufReader};
 

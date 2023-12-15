@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "schemas/configuration.schema.json",
+  "$id": "https://raw.githubusercontent.com/amountainram/remote-files/0.0.0/schemas/configuration.schema.json",
   "type": "object",
   "examples": [
     {},
@@ -110,31 +110,9 @@
         "additionalProperties": false,
         "required": ["type", "configuration"],
         "properties": {
-          "type": { "type": "string", "enum": ["s3", "oci"] },
+          "type": { "const": "s3" },
           "configuration": {
             "$ref": "#/definitions/s3"
-          }
-        }
-      },
-      {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["type", "configuration"],
-        "properties": {
-          "type": { "const": "ftp" },
-          "configuration": {
-            "$ref": "#/definitions/ftp"
-          }
-        }
-      },
-      {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["type", "configuration"],
-        "properties": {
-          "type": { "const": "http" },
-          "configuration": {
-            "$ref": "#/definitions/http"
           }
         }
       }

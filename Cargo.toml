@@ -1,23 +1,21 @@
 [package]
 name = "remote-files"
-version = "0.1.0"
+description = "a cli/lib wrapper of opendal to download/upload and manage remote files on buckets"
+version = "0.0.0"
 edition = "2021"
 
 [package.metadata.release]
 pre-release-commit-message = "'remote-files' tagged to version '{{version}}'"
 tag-message = "'remote-files' tag '{{version}}'"
 pre-release-replacements = [
-  { file = "README.md", search = "\\/remote-files\\/[a-z0-9\\.-]+\\/", replace = "/remote-files/{{version}}/" },
   { file = "schemas/configuration.schema.json", search = "\\/remote-files\\/[a-z0-9\\.-]+\\/", replace = "/remote-files/{{version}}/" }
 ]
 
-[lib]
-name = "rf"
-path = "src/lib.rs"
-
-[[bin]]
-name = "rf"
-path = "src/main.rs"
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
 
 [dependencies]
 clap = { version = "4.4.11", features = ["derive"] }
