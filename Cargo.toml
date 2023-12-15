@@ -8,7 +8,7 @@ edition = "2021"
 pre-release-commit-message = "'remote-files' tagged to version '{{version}}'"
 tag-message = "'remote-files' tag '{{version}}'"
 pre-release-replacements = [
-  { file = "schemas/configuration.schema.json", search = "\\/remote-files\\/[a-z0-9\\.-]+\\/", replace = "/remote-files/{{version}}/" }
+  { file = "schemas/configuration.schema.json", search = "\\/remote-files\\/v[a-z0-9\\.-]+\\/", replace = "/remote-files/v{{version}}/" }
 ]
 
 [profile.release]
