@@ -1,0 +1,40 @@
+name: tests
+
+on:
+  workflow_call:
+    inputs:
+      rust-version:
+        default: '1.71'
+        required: false
+        type: string
+    secrets:
+      cratesio-token:
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:${{ inputs.rust-version }}-bookworm
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Retrieve taget architecture
+        id: target-arch
+        run: |
+          echo "TARGET_ARCH=`rustc -vV | sed -n 's|host: ||p'`" >> "$GITHUB_OUTPUT"
+
+      - name: Build Cache
+        uses: actions/cache@v3
+        id: build-cache
+        with:
+          path: |
+            .cargo
+            target
+          key: ${{ runner.os }}-cargo-${{ steps.target-arch.outputs.TARGET_ARCH }}-bookworm-rust:${{ inputs.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Publish on crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.cratesio-token }}
+        run: cargo publish

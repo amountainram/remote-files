@@ -1,0 +1,32 @@
+name: push tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  checks:
+    needs: []
+    uses: amountainram/remote-files/.github/workflows/checks.yml@main
+
+  tests:
+    needs:
+      - checks
+    uses: amountainram/remote-files/.github/workflows/tests.yml@main
+    secrets:
+      configuration_base64: ${{ secrets.CONFIGURATION_TEST_BASE64 }}
+      application_default_credentials_base64: ${{ secrets.APPLICATION_DEFAULT_CREDENTIALS_BASE64 }}
+
+  build-application:
+    needs:
+      - checks
+    uses: amountainram/remote-files/.github/workflows/build.yml@main
+  
+  publish:
+    needs:
+      - tests
+      - build-application
+    uses: amountainram/remote-files/.github/workflows/publish.yml@main
+    secrets:
+      cratesio-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
