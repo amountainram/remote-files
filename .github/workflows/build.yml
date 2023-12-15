@@ -47,7 +47,7 @@ jobs:
           path: |
             .cargo
             target
-          key: ${{ runner.os }}-cargo-${{ steps.target-arch.outputs.TARGET_ARCH }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ steps.target-arch.outputs.TARGET_ARCH }}-${{ inputs.distro }}-rust:${{ inputs.rust-version }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build library
         run: cargo build
