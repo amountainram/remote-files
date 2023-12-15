@@ -3,6 +3,9 @@ name = "remote-files"
 description = "a cli/lib wrapper of opendal to download/upload and manage remote files on buckets"
 version = "0.0.0"
 edition = "2021"
+license = "MIT"
+keywords = ["file", "bucket", "s3", "gcs"]
+repository = "https://github.com/amountainram/remote-files"
 
 [package.metadata.release]
 pre-release-commit-message = "'remote-files' tagged to version '{{version}}'"
@@ -10,6 +13,8 @@ tag-message = "'remote-files' tag '{{version}}'"
 pre-release-replacements = [
   { file = "schemas/configuration.schema.json", search = "\\/remote-files\\/v[a-z0-9\\.-]+\\/", replace = "/remote-files/v{{version}}/" }
 ]
+push = false
+publish = false
 
 [profile.release]
 opt-level = "s"

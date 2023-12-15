@@ -8,6 +8,7 @@ on:
         required: false
         type: string
       distro:
+        default: bookworm
         required: false
         type: string
 
