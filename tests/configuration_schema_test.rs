@@ -35,12 +35,7 @@ impl Schema {
             .as_object()
             .and_then(|obj| obj.get("examples"))
             .and_then(|examples| examples.as_array().cloned())
-            .map(|examples| {
-                examples
-                    .into_iter()
-                    .map(|example| serde_json::from_value(example))
-                    .collect()
-            })
+            .map(|examples| examples.into_iter().map(serde_json::from_value).collect())
             .expect("no example found")
     }
 }

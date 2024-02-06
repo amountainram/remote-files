@@ -16,3 +16,6 @@ target/
 # project
 /.docker
 /.rf
+
+# ide
+/.vscode

@@ -8,7 +8,7 @@ use remote_files::{
         self, create_client, Configuration, ConfigurationLayer, Persistence, PersistenceLayer,
         CONFIGURATION_FILEPATH_ENV_VAR,
     },
-    error::ClientError,
+    error::Client,
 };
 use std::{collections::HashMap, io::Write, path::PathBuf, process};
 use thiserror::Error;
@@ -29,7 +29,7 @@ enum CliError {
     #[error("{}", 0)]
     Configuration(String),
     #[error(transparent)]
-    CliError(#[from] ClientError),
+    Cli(#[from] Client),
 }
 
 async fn set_folder() -> Result<(), CliError> {
@@ -80,7 +80,7 @@ enum Level {
 }
 
 impl Level {
-    fn as_str(self) -> ColoredString {
+    fn into_str(self) -> ColoredString {
         match self {
             Level::Info => "info".green(),
             Level::Error => "error".bold().red(),
@@ -99,18 +99,18 @@ fn welcome() {
 }
 
 fn ok(text: impl AsRef<str>) {
-    println!("[{}]: {}", Level::Info.as_str(), text.as_ref());
+    println!("[{}]: {}", Level::Info.into_str(), text.as_ref());
 }
 
 fn error(text: impl AsRef<str>) {
-    println!("[{}]: {}", Level::Error.as_str(), text.as_ref());
+    println!("[{}]: {}", Level::Error.into_str(), text.as_ref());
 }
 
 async fn run() -> Result<(), CliError> {
     set_folder().await?;
 
     let env_wd = std::env::var(CONFIGURATION_FILEPATH_ENV_VAR)
-        .map(|str| PathBuf::from(str))
+        .map(PathBuf::from)
         .ok();
 
     let mut cfg_layer = ConfigurationLayer::try_init(env_wd.as_deref())
@@ -191,7 +191,7 @@ async fn run() -> Result<(), CliError> {
                         }
                     }
                 } else {
-                    return Err(CliError::Configuration(format!("no profile selected")));
+                    return Err(CliError::Configuration("no profile selected".to_string()));
                 }
             }
             ProfileCommands::Remove { name } => {
@@ -243,7 +243,7 @@ async fn run() -> Result<(), CliError> {
             ));
 
             let mut page_count = 0;
-            let client = create_client(&profile, &cfg)?.unwrap();
+            let client = create_client(&profile, cfg)?.unwrap();
             let should_paginate = paginate.is_some();
             let mut stream = client.list(&path, paginate).await?;
 
@@ -284,7 +284,7 @@ async fn run() -> Result<(), CliError> {
                             std::io::stdout().flush().unwrap();
 
                             println!();
-                            ok(format!("=== EOF ===\n"));
+                            ok("=== EOF ===\n");
                         }
 
                         break;
@@ -305,7 +305,7 @@ async fn run() -> Result<(), CliError> {
                 profile.bold().cyan()
             ));
 
-            let client = create_client(&profile, &cfg)?.unwrap();
+            let client = create_client(&profile, cfg)?.unwrap();
             client.delete(&path).await?;
         }
         Commands::Upload { src, mut dest } => {
@@ -327,7 +327,7 @@ async fn run() -> Result<(), CliError> {
                 profile.bold().cyan()
             ));
 
-            let client = create_client(&profile, &cfg)?.unwrap();
+            let client = create_client(&profile, cfg)?.unwrap();
 
             client.upload(&src, &dest, None).await?;
         }

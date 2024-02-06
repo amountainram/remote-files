@@ -2,7 +2,7 @@ use std::io;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ClientError {
+pub enum Client {
     #[error("error while initializing client: {}", 0)]
     Initialization(opendal::Error),
     #[error("unhandled error: {}", 0)]
