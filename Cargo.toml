@@ -36,6 +36,7 @@ thiserror = "1.0.56"
 tokio = { version = "1.36.0", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 
 [dev-dependencies]
+assert_fs = "1.1.1"
 tokio = { version = "1.36.0", features = ["macros", "rt", "rt-multi-thread"] }
 url = "2.5.0"
 urlencoding = "2.1.3"
