@@ -223,9 +223,10 @@ async fn run() -> Result<(), CliError> {
                 }
             }
         },
-        Commands::List { mut path, paginate } => {
+        Commands::List { path, paginate } => {
             welcome();
 
+            let mut path = path.unwrap_or("/".to_string());
             let profile = get_profile(args.profile, pers, cfg)?;
             let path = match path.as_bytes() {
                 &[.., b'/'] => path,
