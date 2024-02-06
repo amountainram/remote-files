@@ -54,7 +54,7 @@ pub enum Commands {
     },
     #[clap(aliases = &["l", "li"])]
     List {
-        path: String,
+        path: Option<String>,
         #[arg(short, long)]
         paginate: Option<usize>,
     },
