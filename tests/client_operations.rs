@@ -55,7 +55,7 @@ async fn should_upload_file() {
 
                 // download asset and assert
                 let bytes = client
-                    .download(files.get(0).expect("file to be uploaded").as_str())
+                    .download(files.first().expect("file to be uploaded").as_str())
                     .await
                     .unwrap();
                 assert_eq!(Ok("all good 👌!"), String::from_utf8(bytes).as_deref());
