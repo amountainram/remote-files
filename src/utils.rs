@@ -3,13 +3,13 @@ use prettytable::{format, row, Table};
 use remote_files::client::StatEntry;
 
 fn parse_content_length(input: &str, raw: bool) -> String {
-    if raw || input.len() == 0 {
+    if raw || input.is_empty() {
         return input.to_string();
     }
 
     match input.len() {
-        1 | 2 | 3 => format!("{input}B"),
-        4 | 5 | 6 => {
+        1..=3 => format!("{input}B"),
+        4..=6 => {
             let mut kilobytes = input.to_string();
             kilobytes.truncate(input.len() - 2);
             let mut kilobytes: Vec<char> = kilobytes.chars().collect();
@@ -80,18 +80,16 @@ pub enum NextAction {
 }
 
 pub async fn what_next() -> NextAction {
-    loop {
-        let mut input = String::new();
-        let _ = std::io::stdin().read_line(&mut input);
-        let trimmed_len = input.len() - 1;
+    let mut input = String::new();
+    let _ = std::io::stdin().read_line(&mut input);
+    let trimmed_len = input.len() - 1;
 
-        if let Ok(idx) = &input[..trimmed_len].parse::<usize>() {
-            return NextAction::Print(*idx);
-        }
+    if let Ok(idx) = &input[..trimmed_len].parse::<usize>() {
+        return NextAction::Print(*idx);
+    }
 
-        match (trimmed_len, &input.as_bytes()[..trimmed_len]) {
-            (1, [b'q']) => return NextAction::Quit,
-            _ => return NextAction::Next,
-        }
+    match (trimmed_len, &input.as_bytes()[..trimmed_len]) {
+        (1, [b'q']) => NextAction::Quit,
+        _ => NextAction::Next,
     }
 }

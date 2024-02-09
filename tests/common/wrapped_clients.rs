@@ -44,16 +44,15 @@ impl WrappedClients {
         futures::executor::block_on(async {
             tokio::spawn(join_all(self.clients.drain().map(|(_, client)| {
                 let cloned_paths = self.files.clone();
-                let cleanup = async move {
+
+                async move {
                     let _ = join_all(
                         cloned_paths
                             .iter()
                             .map(|path| async { client.delete(path.as_str()).await }),
                     )
                     .await;
-                };
-
-                cleanup
+                }
             })))
             .await
             .unwrap();

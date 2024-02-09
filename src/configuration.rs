@@ -1,7 +1,7 @@
 use crate::{
     buckets::{GCSBucket, S3Bucket},
     client::Client,
-    error::{ClientError, StoredError},
+    error::{self, StoredError},
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{
@@ -44,7 +44,7 @@ where
     let mut buffer = String::new();
     file.read_to_string(&mut buffer).await?;
 
-    if buffer.len() == 0 {
+    if buffer.is_empty() {
         buffer.clear();
         buffer.push_str("{}");
     }
@@ -71,7 +71,7 @@ pub enum Bucket {
 
 pub type Configuration = HashMap<String, Bucket>;
 
-pub fn create_client(profile: &str, cfg: &Configuration) -> Result<Option<Client>, ClientError> {
+pub fn create_client(profile: &str, cfg: &Configuration) -> Result<Option<Client>, error::Client> {
     if let Some(bucket) = cfg.get(profile) {
         let client: Client = match bucket {
             Bucket::Gcs(gcs) => gcs.configuration.clone().try_into()?,
@@ -202,8 +202,8 @@ mod tests {
 
     impl Drop for TmpDir {
         fn drop(&mut self) {
-            fs::remove_dir_all(self.0.to_owned())
-                .expect(format!("cannot cleanup temp dir '{}'", self.0.display()).as_str());
+            fs::remove_dir_all(&self.0)
+                .unwrap_or_else(|_| panic!("cannot cleanup temp dir '{}'", self.0.display()));
         }
     }
 
