@@ -1,4 +1,4 @@
-use cli::{Args, Commands, Format, Parser, ProfileCommands};
+use cli::{Args, Commands, Parser, ProfileCommands};
 use colored::{ColoredString, Colorize};
 use futures::StreamExt;
 use opendal::EntryMode;
@@ -135,13 +135,9 @@ async fn run() -> Result<(), CliError> {
             }
             ProfileCommands::Add {
                 interactive: _,
-                format,
                 cfg: next_cfg,
             } => {
-                let mut parsed_cfg: Configuration = match format {
-                    Format::Json => serde_json::from_str(&next_cfg).unwrap(),
-                    Format::Yaml => serde_yaml::from_str(&next_cfg).unwrap(),
-                };
+                let mut parsed_cfg: Configuration = serde_json::from_str(&next_cfg).unwrap();
 
                 parsed_cfg.drain().for_each(|(key, value)| {
                     cfg.insert(key, value);
@@ -173,20 +169,13 @@ async fn run() -> Result<(), CliError> {
                     )));
                 }
             }
-            ProfileCommands::Dump { format } => {
+            ProfileCommands::Dump => {
                 if let Some(profile) = pers.current.as_ref() {
                     let cfg = cfg
                         .iter()
                         .filter(|&(name, _)| name == profile)
                         .collect::<HashMap<_, _>>();
-                    match format {
-                        Format::Json => {
-                            println!("{}", serde_json::to_string_pretty(&cfg).unwrap());
-                        }
-                        Format::Yaml => {
-                            println!("{}", serde_yaml::to_string(&cfg).unwrap());
-                        }
-                    }
+                    println!("{}", serde_json::to_string_pretty(&cfg).unwrap());
                 } else {
                     return Err(CliError::Configuration("no profile selected".to_string()));
                 }

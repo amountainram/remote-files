@@ -1,11 +1,5 @@
 pub use clap::Parser;
-use clap::{Subcommand, ValueEnum};
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-pub enum Format {
-    Json,
-    Yaml,
-}
+use clap::Subcommand;
 
 #[derive(Subcommand)]
 pub enum ProfileCommands {
@@ -17,10 +11,6 @@ pub enum ProfileCommands {
         /// enables add in interactive mode
         #[arg(short, default_value_t = false)]
         interactive: bool,
-
-        /// output format
-        #[arg(short, long, value_enum, default_value_t = Format::Json)]
-        format: Format,
 
         /// enables add in interactive mode
         #[arg(value_name = "CONFIG")]
@@ -37,11 +27,7 @@ pub enum ProfileCommands {
     Remove { name: String },
     /// Dumps current profile configuration
     #[clap(aliases = &["d"])]
-    Dump {
-        /// output format
-        #[arg(short, long, value_enum, default_value_t = Format::Json)]
-        format: Format,
-    },
+    Dump,
 }
 
 #[derive(Subcommand)]
