@@ -1,6 +1,8 @@
 use opendal::{services::S3, Error, Operator};
 use serde::{Deserialize, Serialize};
 
+use crate::opendal_builder;
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct S3Config {
     pub name: String,
@@ -25,24 +27,15 @@ impl TryInto<Operator> for S3Config {
     type Error = Error;
 
     fn try_into(self) -> Result<Operator, Self::Error> {
-        let mut builder = S3::default();
-
-        builder.bucket(&self.name);
-
-        self.endpoint
-            .map(|endpoint| {
-                builder.endpoint(&endpoint);
-            })
-            .unwrap_or_else(|| {
-                builder.enable_virtual_host_style();
-            });
-        self.prefix.map(|root| builder.root(&root));
-        self.region.map(|region| builder.region(&region));
-        self.access_key_id.map(|id| builder.access_key_id(&id));
-        self.secret_access_key
-            .map(|key| builder.secret_access_key(&key));
-        self.default_storage_class
-            .map(|storage_class| builder.default_storage_class(&storage_class));
+        let builder = opendal_builder!(
+            S3::default().bucket(&self.name),
+            self.endpoint.as_deref() => endpoint,
+            self.prefix.as_deref() => root,
+            self.region.as_deref() => region,
+            self.access_key_id.as_deref() => access_key_id,
+            self.secret_access_key.as_deref() => secret_access_key,
+            self.default_storage_class.as_deref() => default_storage_class
+        );
 
         let operator = Operator::new(builder)?.finish();
 

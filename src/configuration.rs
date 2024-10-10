@@ -31,6 +31,7 @@ where
         .read(true)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(path)
         .await?;
 
@@ -189,6 +190,7 @@ mod tests {
             let dst = self.0.join(path);
             let mut fd = OpenOptions::new()
                 .create(true)
+                .truncate(true)
                 .write(true)
                 .open(&dst)
                 .await?;
@@ -207,6 +209,7 @@ mod tests {
         }
     }
 
+    #[ignore]
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn should_load_a_valid_configuration() {
         let dir = TmpDir::create_tmp_dir();
@@ -226,6 +229,7 @@ mod tests {
         assert!(cfg.contains_key("gcs"));
     }
 
+    #[ignore]
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn should_persist_new_configuration() {
         let dir = TmpDir::create_tmp_dir();

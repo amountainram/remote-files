@@ -18,7 +18,7 @@ jobs:
       image: rust:${{ inputs.rust-version }}-bookworm
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Retrieve taget architecture
         id: target-arch
@@ -26,7 +26,7 @@ jobs:
           echo "TARGET_ARCH=`rustc -vV | sed -n 's|host: ||p'`" >> "$GITHUB_OUTPUT"
 
       - name: Build Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: build-cache
         with:
           path: |

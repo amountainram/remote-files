@@ -1,6 +1,6 @@
+use crate::client::StatEntry;
 use opendal::EntryMode;
 use prettytable::{format, row, Table};
-use remote_files::client::StatEntry;
 
 fn parse_content_length(input: &str, raw: bool) -> String {
     if raw || input.is_empty() {
@@ -92,4 +92,19 @@ pub async fn what_next() -> NextAction {
         (1, [b'q']) => NextAction::Quit,
         _ => NextAction::Next,
     }
+}
+
+#[macro_export]
+macro_rules! opendal_builder {
+    ($builder:expr, $( $opt:expr => $method:ident ),* ) => {{
+        let builder = $builder;
+        $(
+            let builder = if let Some(value) = $opt {
+                builder.$method(value)
+            } else {
+                builder
+            };
+        )*
+        builder
+    }};
 }
