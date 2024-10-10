@@ -9,16 +9,13 @@ use remote_files::{
         CONFIGURATION_FILEPATH_ENV_VAR,
     },
     error::Client,
+    util::{log_files_table, log_profiles_table, what_next, NextAction},
 };
 use std::{collections::HashMap, io::Write, path::PathBuf, process};
 use thiserror::Error;
 use tokio::fs;
-use utils::what_next;
-
-use crate::utils::NextAction;
 
 mod cli;
-mod utils;
 
 const RF_ICON: &str = "🪣 ";
 
@@ -65,12 +62,12 @@ fn get_profile(
 }
 
 fn list_profiles(profiles: Vec<&String>, current: Option<&str>) {
-    utils::log_profiles_table(profiles, current);
+    log_profiles_table(profiles, current);
     println!();
 }
 
 fn list_entries(items: &[StatEntry], should_paginate: bool) {
-    utils::log_files_table(items, true, should_paginate);
+    log_files_table(items, true, should_paginate);
     println!();
 }
 

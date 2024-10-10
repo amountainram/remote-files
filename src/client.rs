@@ -2,10 +2,11 @@ use crate::{
     buckets::{GCSConfig, S3Config},
     error,
 };
+use bytes::Buf;
 use futures::{stream, Future, Stream, StreamExt};
 pub use opendal::EntryMode;
 use opendal::{Entry, ErrorKind, Metakey, Operator};
-use std::{path::Path, pin::Pin};
+use std::{io::Read, path::Path, pin::Pin};
 use tokio::{
     fs::File,
     io::{AsyncReadExt, BufReader},
@@ -115,7 +116,21 @@ impl Client {
     }
 
     pub async fn download(&self, path: &str) -> Result<Vec<u8>> {
-        self.inner.read(path).await.map_err(error::Client::Download)
+        self.inner
+            .read(path)
+            .await
+            .map_err(error::Client::Download)
+            .and_then(|b| {
+                let mut buffer = vec![];
+                let mut reader = b.reader();
+                reader.read_to_end(&mut buffer).map_err(|err| {
+                    error::Client::Download(opendal::Error::new(
+                        opendal::ErrorKind::Unexpected,
+                        err.to_string(),
+                    ))
+                })?;
+                Ok(buffer)
+            })
     }
 
     pub async fn upload(&self, src: &str, dest: &str, content_type: Option<&str>) -> Result<()> {

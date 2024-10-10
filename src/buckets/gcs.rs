@@ -1,3 +1,4 @@
+use crate::opendal_builder;
 use opendal::{services::Gcs, Error, Operator};
 use serde::{Deserialize, Serialize};
 
@@ -25,20 +26,15 @@ impl TryInto<Operator> for GCSConfig {
     type Error = Error;
 
     fn try_into(self) -> Result<Operator, Self::Error> {
-        let mut builder = Gcs::default();
-
-        builder.bucket(&self.name);
-
-        self.endpoint.map(|endpoint| builder.endpoint(&endpoint));
-        self.credential
-            .map(|credential| builder.credential(&credential));
-        self.credential_path
-            .map(|credential_path| builder.credential_path(&credential_path));
-        self.prefix.map(|root| builder.root(&root));
-        self.predefined_acl
-            .map(|predefined_acl| builder.predefined_acl(&predefined_acl));
-        self.default_storage_class
-            .map(|storage_class| builder.default_storage_class(&storage_class));
+        let builder = opendal_builder!(
+            Gcs::default().bucket(&self.name),
+            self.endpoint.as_deref() => endpoint,
+            self.credential.as_deref() => credential,
+            self.credential_path.as_deref() => credential_path,
+            self.prefix.as_deref() => root,
+            self.predefined_acl.as_deref() => predefined_acl,
+            self.default_storage_class.as_deref() => default_storage_class
+        );
 
         let operator = Operator::new(builder)?.finish();
 
