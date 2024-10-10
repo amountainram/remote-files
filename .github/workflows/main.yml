@@ -34,8 +34,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        distro: [alpine, bookworm, bullseye, buster]
-        rust-version: ['1.71','1.72','1.73','1.74']
+        distro: [alpine, bookworm]
+        rust-version: ['1.81']
     uses: amountainram/remote-files/.github/workflows/build.yml@main
     with:
       distro: ${{ matrix.distro }}

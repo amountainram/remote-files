@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       rust-version:
-        default: '1.71'
+        default: '1.81'
         required: false
         type: string
 
