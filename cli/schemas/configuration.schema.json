@@ -1,10 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Map_of_Bucket",
+  "title": "Configuration",
   "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    }
+  },
   "additionalProperties": {
     "$ref": "#/$defs/Bucket"
   },
+  "required": [
+    "$schema"
+  ],
   "$defs": {
     "Bucket": {
       "oneOf": [
@@ -58,15 +66,23 @@
           ]
         },
         "defaultStorageClass": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GcsStorageClass"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "endpoint": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UrlPathVisitor"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "name": {
@@ -79,14 +95,27 @@
           ]
         },
         "prefix": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UrlDirPathVisitor"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       },
       "required": [
         "name"
+      ]
+    },
+    "GcsStorageClass": {
+      "type": "string",
+      "enum": [
+        "STANDARD",
+        "NEARLINE",
+        "COLDLINE",
+        "ARCHIVE"
       ]
     },
     "S3Config": {
@@ -99,24 +128,36 @@
           ]
         },
         "defaultStorageClass": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/S3StorageClass"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "endpoint": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UrlPathVisitor"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "name": {
           "type": "string"
         },
         "prefix": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UrlDirPathVisitor"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "region": {
@@ -135,6 +176,26 @@
       "required": [
         "name"
       ]
+    },
+    "S3StorageClass": {
+      "type": "string",
+      "enum": [
+        "D_E_E_P__A_R_C_H_I_V_E",
+        "G_L_A_C_I_E_R",
+        "G_L_A_C_I_E_R__I_R",
+        "I_N_T_E_L_L_I_G_E_N_T__T_I_E_R_I_N_G",
+        "O_N_E_Z_O_N_E__I_A",
+        "O_U_T_P_O_S_T_S",
+        "R_E_D_U_C_E_D__R_E_D_U_N_D_A_N_C_Y",
+        "S_T_A_N_D_A_R_D",
+        "S_T_A_N_D_A_R_D__I_A"
+      ]
+    },
+    "UrlDirPathVisitor": {
+      "type": "string"
+    },
+    "UrlPathVisitor": {
+      "type": "string"
     }
   }
 }

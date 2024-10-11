@@ -1,7 +1,8 @@
 use std::io;
-use thiserror::Error;
 
-#[derive(Debug, Error)]
+pub type Result<T, E = Error> = std::prelude::v1::Result<T, E>;
+
+#[derive(Debug, thiserror::Error)]
 pub enum Client {
     #[error("error while initializing client: {}", 0)]
     Initialization(opendal::Error),
@@ -27,12 +28,19 @@ pub enum Client {
     Delete { path: String, error: opendal::Error },
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum CliStateError {
-    #[error("{}", 0)]
+    #[error("state initialization error {}", 0)]
     Initialization(String),
-    #[error(transparent)]
+    #[error("os I/O operation error {:?}", 0)]
     IO(#[from] io::Error),
-    #[error("{:?}", 0)]
+    #[error("serialization/deserialization error {:?}", 0)]
     JSON(#[from] serde_json::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error(transparent)]
+pub enum Error {
+    State(#[from] CliStateError),
+    Cli(#[from] Client),
 }

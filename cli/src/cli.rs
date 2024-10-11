@@ -1,6 +1,6 @@
-use crate::url_path::UrlPath;
 pub use clap::Parser;
 use clap::Subcommand;
+use configuration::url_path::UrlPath;
 use std::path::PathBuf;
 
 #[derive(Subcommand)]
@@ -23,10 +23,14 @@ pub enum ProfileCommands {
     Get,
     /// Sets current profile
     #[clap(aliases = &["s"])]
-    Set { name: String },
+    Set { name: Option<String> },
     /// Sets current profile
     #[clap(aliases = &["r", "rm"])]
-    Remove { name: String },
+    Remove {
+        name: Option<String>,
+        #[arg(short = 'y', default_value_t = false)]
+        confirm: bool,
+    },
     /// Dumps current profile configuration
     #[clap(aliases = &["d"])]
     Dump,
