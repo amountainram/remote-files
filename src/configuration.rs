@@ -31,7 +31,7 @@ where
         .read(true)
         .write(true)
         .create(true)
-        .truncate(true)
+        .truncate(false)
         .open(path)
         .await?;
 
@@ -209,7 +209,6 @@ mod tests {
         }
     }
 
-    #[ignore]
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn should_load_a_valid_configuration() {
         let dir = TmpDir::create_tmp_dir();
@@ -229,7 +228,6 @@ mod tests {
         assert!(cfg.contains_key("gcs"));
     }
 
-    #[ignore]
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn should_persist_new_configuration() {
         let dir = TmpDir::create_tmp_dir();
