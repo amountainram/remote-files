@@ -1,8 +1,11 @@
-[net]
-git-fetch-with-cli = true
+[env]
+RF_HOME = ".rf"
+
+[target.'x86_64-unknown-linux-musl']
+rustflags = ["-C", "target-feature=-crt-static"]
 
 [registries.crates-io]
 protocol = "sparse"
 
-[target.'x86_64-unknown-linux-musl']
-rustflags = ["-C", "target-feature=-crt-static"]
+[net]
+git-fetch-with-cli = true

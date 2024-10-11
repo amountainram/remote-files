@@ -28,7 +28,7 @@ pub enum Client {
 }
 
 #[derive(Debug, Error)]
-pub enum StoredError {
+pub enum CliStateError {
     #[error("{}", 0)]
     Initialization(String),
     #[error(transparent)]

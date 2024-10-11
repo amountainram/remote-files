@@ -3,26 +3,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::opendal_builder;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct S3Config {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub endpoint: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub prefix: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub region: Option<String>,
-    #[serde(rename = "accessKeyId", skip_serializing_if = "Option::is_none")]
-    pub access_key_id: Option<String>,
-    #[serde(rename = "secretAccessKey", skip_serializing_if = "Option::is_none")]
-    pub secret_access_key: Option<String>,
-    #[serde(
-        rename = "defaultStorageClass",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub default_storage_class: Option<String>,
-}
-
 impl TryInto<Operator> for S3Config {
     type Error = Error;
 

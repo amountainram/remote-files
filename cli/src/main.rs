@@ -1,21 +1,25 @@
 use cli::{Args, Commands, Parser, ProfileCommands};
+use client::StatEntry;
 use colored::{ColoredString, Colorize};
 use futures::StreamExt;
 use opendal::EntryMode;
-use remote_files::{
-    client::StatEntry,
-    configuration::{
-        self, create_client, Configuration, ConfigurationLayer, Persistence, PersistenceLayer,
-        CONFIGURATION_FILEPATH_ENV_VAR,
-    },
-    error::Client,
-    util::{log_files_table, log_profiles_table, what_next, NextAction},
-};
+//configuration::{
+//    self, create_client, Configuration, ConfigurationLayer, Persistence, PersistenceLayer,
+//    CONFIGURATION_FILEPATH_ENV_VAR,
+//},
+use error::Client;
 use std::{collections::HashMap, io::Write, path::PathBuf, process};
 use thiserror::Error;
 use tokio::fs;
+use util::{log_files_table, log_profiles_table, what_next, NextAction};
 
+mod buckets;
 mod cli;
+mod client;
+mod configuration;
+mod error;
+mod url_path;
+mod util;
 
 const RF_ICON: &str = "🪣 ";
 
@@ -104,18 +108,7 @@ fn error(text: impl AsRef<str>) {
 }
 
 async fn run() -> Result<(), CliError> {
-    set_folder().await?;
-
-    let env_wd = std::env::var(CONFIGURATION_FILEPATH_ENV_VAR)
-        .map(PathBuf::from)
-        .ok();
-
-    let mut cfg_layer = ConfigurationLayer::try_init(env_wd.as_deref())
-        .await
-        .unwrap();
-    let cfg = cfg_layer.get_mut();
-    let mut pers_layer = PersistenceLayer::try_init(None).await.unwrap();
-    let pers = pers_layer.get_mut();
+    let (cli_state, cfg) = configuration::try_init().await?;
 
     let args = Args::parse();
 
@@ -322,7 +315,7 @@ async fn run() -> Result<(), CliError> {
     Ok(())
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     if let Err(err) = run().await {
         error(format!("{:#?}\n", err));

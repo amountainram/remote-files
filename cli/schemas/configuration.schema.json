@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Map_of_Bucket",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "#/$defs/Bucket"
+  },
+  "$defs": {
+    "Bucket": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "gcs"
+            },
+            "configuration": {
+              "$ref": "#/$defs/GCSConfig"
+            }
+          },
+          "required": [
+            "type",
+            "configuration"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "s3"
+            },
+            "configuration": {
+              "$ref": "#/$defs/S3Config"
+            }
+          },
+          "required": [
+            "type",
+            "configuration"
+          ]
+        }
+      ]
+    },
+    "GCSConfig": {
+      "type": "object",
+      "properties": {
+        "credential": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "credentialPath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "defaultStorageClass": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "predefinedAcl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prefix": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "S3Config": {
+      "type": "object",
+      "properties": {
+        "accessKeyId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "defaultStorageClass": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "region": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secretAccessKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ]
+    }
+  }
+}

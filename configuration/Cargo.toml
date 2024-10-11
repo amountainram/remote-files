@@ -1,0 +1,16 @@
+[package]
+name = "configuration"
+description = "json configuration for 'remote-files'"
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/amountainram/remote-files"
+
+[dependencies]
+schemars.workspace = true
+serde = { workspace = true, features = ["derive"] }
+zeroize = { version = "1.8.1", features = ["derive"] }
+
+[dev-dependencies]
+rstest = "0.23.0"
+serde_json.workspace = true
