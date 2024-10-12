@@ -47,74 +47,20 @@
 //     table.print_tty(true).unwrap();
 // }
 
-// pub fn log_files_table(items: &[StatEntry], raw: bool, should_paginate: bool) {
-//     let mut table = Table::new();
-
-//     table.set_format(*format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
-
-//     table.set_titles(row!["", Fgb->"name", Fgb->"content-type", Fgb->"size", Fgb->"type"]);
-//     for (line, item) in items.iter().enumerate() {
-//         let line = line + 1;
-//         match item.3 {
-//             EntryMode::FILE => {
-//                 table.add_row(row![Fw-> line, Fw->item.0,Fbb->item.1,Fbb->parse_content_length(&item.2, raw),Fbb->"file"]);
-//             }
-//             EntryMode::DIR => {
-//                 table.add_row(row![Fw-> line, Fm->item.0, "", "", Fmb->"dir"]);
-//             }
-//             EntryMode::Unknown => {}
-//         };
-//     }
-
-//     if !should_paginate {
-//         table.add_row(row![Fw -> "", Fm-> "...", "", "", ""]);
-//     }
-
-//     table.print_tty(true).unwrap();
-// }
-
-// pub enum NextAction {
-//     Quit,
-//     Next,
-//     Print(usize),
-// }
-
-// pub async fn what_next() -> NextAction {
-//     let mut input = String::new();
-//     let _ = std::io::stdin().read_line(&mut input);
-//     let trimmed_len = input.len() - 1;
-
-//     if let Ok(idx) = &input[..trimmed_len].parse::<usize>() {
-//         return NextAction::Print(*idx);
-//     }
-
-//     match (trimmed_len, &input.as_bytes()[..trimmed_len]) {
-//         (1, [b'q']) => NextAction::Quit,
-//         _ => NextAction::Next,
-//     }
-// }
-
-// #[macro_export]
-// macro_rules! opendal_builder {
-//     ($builder:expr, $( $opt:expr => $method:ident ),* ) => {{
-//         let builder = $builder;
-//         $(
-//             let builder = if let Some(value) = $opt {
-//                 builder.$method(value)
-//             } else {
-//                 builder
-//             };
-//         )*
-//         builder
-//     }};
-// }
 use anyhow::{anyhow, Result};
 use colored::Colorize;
-use std::collections::HashSet;
+use opendal::EntryMode;
+use remote_files_configuration::Bucket;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+};
 use tabled::{
     settings::{object::Segment, Alignment, Settings},
     Table, Tabled,
 };
+
+use crate::client::StatEntry;
 
 static RF_ICON: &str = "🪣 ";
 
@@ -133,6 +79,17 @@ where
     S: AsRef<str>,
 {
     println!("{}", text.as_ref().green());
+}
+
+pub fn blank_line() {
+    println!();
+}
+
+pub fn print_error<E>(err: E)
+where
+    E: Debug,
+{
+    eprintln!("[{}]: {err:?}", "error".bold().red());
 }
 
 #[derive(Tabled)]
@@ -177,4 +134,60 @@ pub fn get_profile<'a>(
     cfg.get(profile)
         .copied()
         .ok_or(anyhow!("no profile '{profile}' found"))
+}
+
+pub fn get_config<'a>(
+    args_profile: Option<&'a str>,
+    current: Option<&'a str>,
+    cfg: &'a HashMap<String, Bucket>,
+) -> Result<&'a Bucket> {
+    // get current profile if any
+    let profile = args_profile
+        .or(current)
+        .ok_or(anyhow!("no profile selected"))?;
+
+    cfg.get(profile)
+        .ok_or(anyhow!("no profile '{profile}' found"))
+}
+
+pub enum NextAction {
+    Quit,
+    Next,
+    Print(usize),
+}
+
+pub async fn what_next() -> NextAction {
+    let mut input = String::new();
+    let _ = std::io::stdin().read_line(&mut input);
+    let trimmed_len = input.len() - 1;
+
+    if let Ok(idx) = &input[..trimmed_len].parse::<usize>() {
+        return NextAction::Print(*idx);
+    }
+
+    match (trimmed_len, &input.as_bytes()[..trimmed_len]) {
+        (1, [b'q']) => NextAction::Quit,
+        _ => NextAction::Next,
+    }
+}
+
+fn log_files_table(items: &[StatEntry], should_paginate: bool) {
+    let table = if !should_paginate {
+        let mut items = items.to_vec();
+        items.push(StatEntry {
+            path: "...".into(),
+            content_type: "".into(),
+            content_length: None,
+            r#type: EntryMode::Unknown,
+        });
+        Table::new(items)
+    } else {
+        Table::new(items)
+    };
+    println!("\n{table}\n");
+}
+
+pub fn list_entries(items: &[StatEntry], should_paginate: bool) {
+    log_files_table(items, should_paginate);
+    println!();
 }

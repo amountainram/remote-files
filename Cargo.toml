@@ -1,8 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["configuration", "cli"]
+members = ["configuration", "remote-files"]
 
 [workspace.dependencies]
+indoc = "2.0.5"
+opendal = "0.50.0"
 rstest = "0.23.0"
 schemars = "1.0.0-alpha.15"
 serde = "1.0.210"
@@ -13,32 +15,3 @@ opt-level = 3
 lto = true
 codegen-units = 1
 strip = "symbols"
-
-# [dependencies]
-# bytes = "1.7.2"
-# clap = { version = "4.5.20", features = ["derive"] }
-# colored = "2.1.0"
-# dirs = "5.0.1"
-# futures = "0.3.31"
-# opendal = { version = "0.50.0", features = ["services-gcs", "services-s3"] }
-# prettytable = "0.10.0"
-# serde = { version = "1.0.210", features = ["derive"] }
-# serde_json = "1.0.128"
-# thiserror = "1.0.64"
-# tokio = { version = "1.40.0", features = [
-#   "fs",
-#   "io-util",
-#   "macros",
-#   "rt-multi-thread",
-# ] }
-#
-# [dev-dependencies]
-# assert_fs = "1.1.2"
-# tokio = { version = "1.40.0", features = ["macros", "rt", "rt-multi-thread"] }
-# url = "2.5.2"
-# urlencoding = "2.1.3"
-# uuid = { version = "1.10.0", features = [
-#   "v4",
-#   "fast-rng",
-#   "macro-diagnostics",
-# ] }

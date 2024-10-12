@@ -1,70 +1,21 @@
-//use crate::{
-//    buckets::{GCSBucket, S3Bucket},
-//    client::Client,
-//    error::{self, StoredError},
-//};
-//use serde::{de::DeserializeOwned, Deserialize, Serialize};
-//use std::{
-//    collections::HashMap,
-//    path::{Path, PathBuf},
-//};
-//use tokio::{
-//    fs::{File, OpenOptions},
-//    io::{AsyncReadExt, AsyncSeekExt, AsyncWriteExt},
-//};
-//
-//pub static CONFIGURATION_FILEPATH_ENV_VAR: &str = "RF_CFG_FILEPATH";
-//
-//pub fn get_default_folder() -> Result<PathBuf, StoredError> {
-//    dirs::config_dir()
-//        .map(|pb| pb.join("rf"))
-//        .ok_or(StoredError::Initialization(
-//            "cannot access configuration directory".to_string(),
-//        ))
-//}
-//
-//async fn open_rw_fd<P>(path: P) -> Result<File, StoredError>
-//where
-//    P: AsRef<Path>,
-//{
-//    let fd = OpenOptions::new()
-//        .read(true)
-//        .write(true)
-//        .create(true)
-//        .truncate(true)
-//        .open(path)
-//        .await?;
-//
-//    Ok(fd)
-//}
-//
-//async fn read<D>(file: &mut File) -> Result<D, StoredError>
-//where
-//    D: DeserializeOwned,
-//{
-//    let mut buffer = String::new();
-//    file.read_to_string(&mut buffer).await?;
-//
-//    if buffer.is_empty() {
-//        buffer.clear();
-//        buffer.push_str("{}");
-//    }
-//
-//    let configuration = serde_json::from_str(&buffer)?;
-//
-//    Ok(configuration)
-//}
+use opendal::{
+    services::{Gcs, S3},
+    Error, Operator,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fmt::{self, Debug, Display, Formatter},
     path::PathBuf,
+    str::FromStr,
 };
+use typed_builder::TypedBuilder;
 use url_path::{UrlDirPath, UrlPath};
 use zeroize::ZeroizeOnDrop;
 
 pub mod url_path;
+pub mod util;
 
 /// Represents a plaintext secret. It is read as-is from the configuration file.
 #[derive(Clone, PartialEq, ZeroizeOnDrop, Deserialize, Serialize, JsonSchema)]
@@ -78,6 +29,12 @@ impl Secret {
     /// Reads the content of a secret.
     pub fn read(&self) -> &str {
         self.content.as_str()
+    }
+}
+
+impl From<String> for Secret {
+    fn from(content: String) -> Self {
+        Self { content }
     }
 }
 
@@ -99,27 +56,9 @@ impl AsRef<str> for Secret {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum GcsStorageClass {
-    STANDARD,
-    NEARLINE,
-    COLDLINE,
-    ARCHIVE,
-}
+make_enum_with_variants!(GcsStorageClass, STANDARD, NEARLINE, COLDLINE, ARCHIVE);
 
-impl From<&GcsStorageClass> for &'static str {
-    fn from(value: &GcsStorageClass) -> Self {
-        match value {
-            GcsStorageClass::STANDARD => "STANDARD",
-            GcsStorageClass::NEARLINE => "NEARLINE",
-            GcsStorageClass::COLDLINE => "COLDLINE",
-            GcsStorageClass::ARCHIVE => "ARCHIVE",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, TypedBuilder)]
 #[serde(rename_all = "camelCase")]
 pub struct GCSConfig {
     pub name: String,
@@ -137,41 +76,38 @@ pub struct GCSConfig {
     pub predefined_acl: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum S3StorageClass {
-    #[allow(non_camel_case_types)]
-    DEEP_ARCHIVE,
-    GLACIER,
-    #[allow(non_camel_case_types)]
-    GLACIER_IR,
-    #[allow(non_camel_case_types)]
-    INTELLIGENT_TIERING,
-    #[allow(non_camel_case_types)]
-    ONEZONE_IA,
-    OUTPOSTS,
-    #[allow(non_camel_case_types)]
-    REDUCED_REDUNDANCY,
-    STANDARD,
-    #[allow(non_camel_case_types)]
-    STANDARD_IA,
-}
+impl TryInto<Operator> for GCSConfig {
+    type Error = Error;
 
-impl From<&S3StorageClass> for &'static str {
-    fn from(value: &S3StorageClass) -> Self {
-        match value {
-            S3StorageClass::DEEP_ARCHIVE => "DEEP_ARCHIVE",
-            S3StorageClass::GLACIER => "GLACIER",
-            S3StorageClass::GLACIER_IR => "GLACIER_IR",
-            S3StorageClass::INTELLIGENT_TIERING => "INTELLIGENT_TIERING",
-            S3StorageClass::ONEZONE_IA => "ONEZONE_IA",
-            S3StorageClass::OUTPOSTS => "OUTPOSTS",
-            S3StorageClass::REDUCED_REDUNDANCY => "REDUCED_REDUNDANCY",
-            S3StorageClass::STANDARD => "STANDARD",
-            S3StorageClass::STANDARD_IA => "STANDARD_IA",
-        }
+    fn try_into(self) -> Result<Operator, Self::Error> {
+        let builder = opendal_builder!(
+            Gcs::default().bucket(&self.name),
+            self.endpoint.map(|p| p.to_string()).as_deref() => endpoint,
+            self.credential.as_ref().map(|p| p.read()) => credential,
+            self.credential_path.as_ref().map(|p| p.to_string_lossy()).as_deref() => credential_path,
+            self.prefix.map(|p| p.to_string()).as_deref() => root,
+            self.predefined_acl.as_deref() => predefined_acl,
+            self.default_storage_class.map(|p| p.to_string()).as_deref() => default_storage_class
+        );
+
+        let operator = Operator::new(builder)?.finish();
+
+        Ok(operator)
     }
 }
+
+make_enum_with_variants!(
+    S3StorageClass,
+    DEEP_ARCHIVE,
+    GLACIER,
+    GLACIER_IR,
+    INTELLIGENT_TIERING,
+    ONEZONE_IA,
+    OUTPOSTS,
+    REDUCED_REDUNDANCY,
+    STANDARD,
+    STANDARD_IA
+);
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -191,6 +127,28 @@ pub struct S3Config {
     pub default_storage_class: Option<S3StorageClass>,
 }
 
+make_enum_with_variants!(BucketVariant, gcs, s3);
+
+impl TryInto<Operator> for S3Config {
+    type Error = Error;
+
+    fn try_into(self) -> Result<Operator, Self::Error> {
+        let builder = opendal_builder!(
+            S3::default().bucket(&self.name),
+            self.endpoint.map(|p| p.to_string()).as_deref() => endpoint,
+            self.prefix.map(|p| p.to_string()).as_deref() => root,
+            self.region.as_deref() => region,
+            self.access_key_id.as_ref().map(|p| p.read()) => access_key_id,
+            self.secret_access_key.as_ref().map(|p| p.read()) => secret_access_key,
+            self.default_storage_class.map(|p| p.to_string()).as_deref() => default_storage_class
+        );
+
+        let operator = Operator::new(builder)?.finish();
+
+        Ok(operator)
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(tag = "type", content = "configuration")]
 pub enum Bucket {
@@ -200,10 +158,28 @@ pub enum Bucket {
     S3(S3Config),
 }
 
+impl From<Bucket> for BucketVariant {
+    fn from(value: Bucket) -> Self {
+        match value {
+            Bucket::Gcs(_) => BucketVariant::gcs,
+            Bucket::S3(_) => BucketVariant::s3,
+        }
+    }
+}
+
+impl FromStr for Bucket {
+    type Err = serde_json::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_str(s)
+    }
+}
+
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct Configuration {
-    #[serde(rename = "$schema")]
-    _schema: String,
+    #[serde(rename = "$schema", skip_serializing_if = "Option::is_none")]
+    #[allow(dead_code)]
+    schema: Option<String>,
     #[serde(flatten)]
     pub buckets: HashMap<String, Bucket>,
 }

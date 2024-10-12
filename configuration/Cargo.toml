@@ -1,5 +1,5 @@
 [package]
-name = "configuration"
+name = "remote-files-configuration"
 description = "json configuration for 'remote-files'"
 version = "0.0.0"
 edition = "2021"
@@ -8,11 +8,15 @@ repository = "https://github.com/amountainram/remote-files"
 
 [dependencies]
 http = "1.1.0"
+opendal = { workspace = true, features = ["services-gcs", "services-s3"] }
 paste = "1.0.15"
 schemars.workspace = true
 serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+typed-builder = "0.20.0"
 zeroize = { version = "1.8.1", features = ["derive"] }
 
 [dev-dependencies]
+indoc.workspace = true
 rstest.workspace = true
 serde_json.workspace = true

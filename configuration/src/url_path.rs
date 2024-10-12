@@ -5,6 +5,7 @@ use serde::{de::Visitor, Deserialize, Serialize};
 use std::{
     borrow::Cow,
     fmt::{self, Display},
+    path::PathBuf,
     str::FromStr,
 };
 
@@ -145,8 +146,14 @@ impl Display for UrlPath {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct UrlDirPath(Vec<String>);
+
+impl UrlDirPath {
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
 
 impl From<UrlPath> for UrlDirPath {
     fn from(UrlPath(segments): UrlPath) -> Self {

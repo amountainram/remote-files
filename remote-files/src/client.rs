@@ -1,12 +1,13 @@
-use crate::{
-    buckets::{GCSConfig, S3Config},
-    error,
-};
+use crate::error;
+use anyhow::Error;
 use bytes::Buf;
-use futures::{stream, Future, Stream, StreamExt};
+use futures::{stream, FutureExt, Stream, StreamExt, TryStreamExt};
+use human_format::{Formatter, Scales};
 pub use opendal::EntryMode;
 use opendal::{Entry, ErrorKind, Metakey, Operator};
-use std::{io::Read, path::Path, pin::Pin};
+use remote_files_configuration::{url_path::UrlDirPath, Bucket};
+use std::{io::Read, path::Path};
+use tabled::Tabled;
 use tokio::{
     fs::File,
     io::{AsyncReadExt, BufReader},
@@ -14,7 +15,36 @@ use tokio::{
 
 type Result<T> = std::result::Result<T, error::Client>;
 
-pub type StatEntry = (String, String, String, EntryMode);
+fn display_content_length(size: &Option<u64>) -> String {
+    if let Some(size) = size {
+        Formatter::new()
+            .with_scales(Scales::Binary())
+            .with_units("B")
+            .format(*size as f64)
+    } else {
+        "".into()
+    }
+}
+
+fn display_with_icons(entry: &EntryMode) -> String {
+    match entry {
+        EntryMode::DIR => "📂",
+        _ => "",
+    }
+    .into()
+}
+
+#[derive(Clone, Tabled)]
+pub struct StatEntry {
+    #[tabled(rename = "name")]
+    pub path: String,
+    #[tabled(rename = "content-type")]
+    pub content_type: String,
+    #[tabled(rename = "size", display_with = "display_content_length")]
+    pub content_length: Option<u64>,
+    #[tabled(rename = "type", display_with = "display_with_icons")]
+    pub r#type: EntryMode,
+}
 
 const DEFAULT_LIST_LIMIT: usize = 10;
 
@@ -32,18 +62,18 @@ impl Client {
             .map_err(|err| error::Client::ListMetadata(path.to_string(), err))?;
         match meta.mode() {
             EntryMode::Unknown => Err(error::Client::StatUnknownMode(path.to_string())),
-            EntryMode::FILE => Ok((
-                path.to_string(),
-                meta.content_type().unwrap_or_default().to_string(),
-                meta.content_length().to_string(),
-                EntryMode::FILE,
-            )),
-            EntryMode::DIR => Ok((
-                path.to_string(),
-                meta.content_type().unwrap_or_default().to_string(),
-                String::from(""),
-                EntryMode::DIR,
-            )),
+            EntryMode::FILE => Ok(StatEntry {
+                path: path.to_string(),
+                content_type: meta.content_type().unwrap_or_default().to_string(),
+                content_length: meta.content_length().into(),
+                r#type: EntryMode::FILE,
+            }),
+            EntryMode::DIR => Ok(StatEntry {
+                path: path.to_string(),
+                content_type: meta.content_type().unwrap_or_default().to_string(),
+                content_length: None,
+                r#type: EntryMode::DIR,
+            }),
         }
     }
 
@@ -61,20 +91,20 @@ impl Client {
                 match meta.mode() {
                     EntryMode::Unknown => continue,
                     EntryMode::FILE => {
-                        list.push((
-                            entry.name().to_string(),
-                            meta.content_type().unwrap_or_default().to_string(),
-                            meta.content_length().to_string(),
-                            EntryMode::FILE,
-                        ));
+                        list.push(StatEntry {
+                            path: entry.name().to_string(),
+                            content_type: meta.content_type().unwrap_or_default().to_string(),
+                            content_length: meta.content_length().into(),
+                            r#type: EntryMode::FILE,
+                        });
                     }
                     EntryMode::DIR => {
-                        list.push((
-                            entry.name().to_string(),
-                            meta.content_type().unwrap_or_default().to_string(),
-                            String::from(""),
-                            EntryMode::DIR,
-                        ));
+                        list.push(StatEntry {
+                            path: entry.name().to_string(),
+                            content_type: meta.content_type().unwrap_or_default().to_string(),
+                            content_length: None,
+                            r#type: EntryMode::DIR,
+                        });
                     }
                 }
             } else {
@@ -85,34 +115,47 @@ impl Client {
         list
     }
 
-    pub async fn list<'a>(
-        &'a self,
-        path: &'a str,
+    pub async fn list(
+        &self,
+        path: &UrlDirPath,
         limit: Option<usize>,
-    ) -> Result<Pin<Box<dyn Stream<Item = impl Future<Output = Vec<StatEntry>> + '_> + '_>>> {
+    ) -> Result<impl Stream<Item = Vec<StatEntry>> + Unpin + Send + 'static> {
         let should_paginate = limit.is_some();
         let limit = limit.unwrap_or(DEFAULT_LIST_LIMIT);
 
+        let path = path.to_string();
         let client = self.inner.clone();
         let entries = client
-            .list_with(path)
+            .list_with(&path)
             .metakey(Metakey::ContentLength)
             .await
             .map_err(|err| match err.kind() {
-                ErrorKind::NotADirectory => error::Client::ListNotDirectory(path.to_string()),
+                ErrorKind::NotADirectory => error::Client::ListNotDirectory(path.clone()),
                 _ => error::Client::Unhandled(err),
             })?;
 
-        let stream = stream::iter(entries).chunks(limit);
-
-        if should_paginate {
-            Ok(stream.map(|chunk| self.stat_entries(path, chunk)).boxed())
+        let client = self.clone();
+        let stream = stream::iter(entries);
+        let stream = if should_paginate {
+            stream.chunks(limit).boxed()
         } else {
-            Ok(stream
-                .take(1)
-                .map(|chunk| self.stat_entries(path, chunk))
-                .boxed())
-        }
+            stream.chunks(10).take(1).boxed()
+        };
+
+        Ok(stream::unfold(
+            (stream, client, path),
+            |(mut stream, client, path)| async move {
+                if let Some(next) = stream.next().await {
+                    Some((
+                        client.stat_entries(&path, next).await,
+                        (stream, client, path),
+                    ))
+                } else {
+                    None
+                }
+            },
+        )
+        .boxed())
     }
 
     pub async fn download(&self, path: &str) -> Result<Vec<u8>> {
@@ -181,22 +224,16 @@ impl Client {
     }
 }
 
-impl TryFrom<GCSConfig> for Client {
-    type Error = error::Client;
-
-    fn try_from(value: GCSConfig) -> std::result::Result<Self, Self::Error> {
-        Ok(Self {
-            inner: value.try_into().map_err(error::Client::Initialization)?,
-        })
-    }
-}
-
-impl TryFrom<S3Config> for Client {
-    type Error = error::Client;
-
-    fn try_from(value: S3Config) -> std::result::Result<Self, Self::Error> {
-        Ok(Self {
-            inner: value.try_into().map_err(error::Client::Initialization)?,
-        })
+impl TryFrom<Bucket> for Client {
+    type Error = Error;
+    fn try_from(value: Bucket) -> std::result::Result<Self, Self::Error> {
+        match value {
+            Bucket::Gcs(gcsconfig) => Ok(Client {
+                inner: gcsconfig.try_into()?,
+            }),
+            Bucket::S3(s3_config) => Ok(Client {
+                inner: s3_config.try_into()?,
+            }),
+        }
     }
 }
