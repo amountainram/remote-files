@@ -48,6 +48,8 @@ pub enum Commands {
     Delete { path: String },
     #[clap(aliases = &["u", "up"])]
     Upload { src: String, dest: String },
+    #[clap(aliases = &["dw", "down"])]
+    Download { src: String, dest: String },
 }
 
 #[derive(Parser)]
