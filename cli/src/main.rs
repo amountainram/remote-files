@@ -380,6 +380,23 @@ async fn run() -> Result<()> {
 
                                //         client.upload(&src, &dest, None).await?;
                                //     }
+                               // Commands::Download { src, dest } => {
+                               //     welcome();
+
+                               //     let profile = get_profile(args.profile, pers, cfg)?;
+
+                               //     ok(format!(
+                               //         "downloading file '{}' to '{}' for profile '{}'\n",
+                               //         src,
+                               //         dest.as_str().bold().green(),
+                               //         profile.bold().cyan()
+                               //     ));
+
+                               //     let client = create_client(&profile, cfg)?.unwrap();
+
+                               //     let contents = client.download(&src).await?;
+                               //     fs::write(dest, contents).await.unwrap();
+                               // }
     };
 
     util::msg_ok("");

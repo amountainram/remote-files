@@ -61,7 +61,9 @@ pub enum Commands {
     /// is the filename which is stripped from the source and
     /// appended to the destination
     #[clap(aliases = &["u", "up"])]
-    Upload { src: PathBuf, dest: UrlPath },
+    Upload { src: String, dest: String },
+    #[clap(aliases = &["dw", "down"])]
+    Download { src: String, dest: String },
 }
 
 #[derive(Parser)]
