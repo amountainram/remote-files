@@ -1,4 +1,4 @@
-use configuration::{CliState, Configuration};
+use remote_files_configuration::{CliState, Configuration};
 use std::{fs, io, path::Path};
 
 fn build_configuration_schema() -> io::Result<()> {

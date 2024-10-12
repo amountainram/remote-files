@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use configuration::{CliState, Configuration};
+use remote_files_configuration::{CliState, Configuration};
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::Cow,

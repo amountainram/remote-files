@@ -16,20 +16,22 @@ pre-release-replacements = [
 push = false
 publish = false
 
+[[bin]]
+name = "rf"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0.89"
 bytes = "1.7.2"
 clap = { version = "4.5.20", features = ["derive"] }
 colored = "2.1.0"
-configuration = { path = "../configuration" }
+remote-files-configuration = { path = "../configuration" }
 dirs = "5.0.1"
 futures = "0.3.31"
-indoc = "2.0.5"
 inquire = "0.7.5"
 opendal = { version = "0.50.0", features = ["services-gcs", "services-s3"] }
-prettytable = "0.10.0"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
 tabled = "0.16.0"
 thiserror = "1.0.64"
 tokio = { version = "1.40.0", features = [
@@ -38,9 +40,12 @@ tokio = { version = "1.40.0", features = [
   "macros",
   "rt-multi-thread",
 ] }
+rustyline = "14.0.0"
+human_format = "1.1.0"
 
 [dev-dependencies]
 assert_fs = "1.1.2"
+indoc.workspace = true
 rstest.workspace = true
 tokio = { version = "1.40.0", features = ["macros", "rt", "rt-multi-thread"] }
 url = "2.5.2"
@@ -52,6 +57,6 @@ uuid = { version = "1.10.0", features = [
 ] }
 
 [build-dependencies]
-configuration = { path = "../configuration" }
+remote-files-configuration = { path = "../configuration" }
 schemars.workspace = true
 serde_json = "1.0.128"
